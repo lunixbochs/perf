@@ -78,7 +78,7 @@ def project_file(project, host, tag, counter, size='1'):
         image = plot(title=title, xlabel='commit', ylabel=counter, xtics=commits, data=lines, width=w, height=h)
         f = {'mime': 'image/png', 'data': binary.Binary(image)}
         # TODO: if image is too big it might render successfully but fail to insert and throw a 500
-        mongo.db.cache.update_one(cache_key, {'$set': {'file': f}}, upsert=True)
+        mongo.db.cache.update(cache_key, {'$set': {'file': f}}, upsert=True)
     return send_file(io.BytesIO(f['data']), mimetype=f['mime'])
 
 @app.route('/perf/<project>/')
@@ -120,7 +120,7 @@ def publish(project):
         tscommit = datetime.utcfromtimestamp(tscommit / 1000.0)
 
     commit_sub = 'commits.{}'.format(commit)
-    mongo.db.projects.update_one(
+    mongo.db.projects.update(
         {'project': project, 'commits': {'$nin': [commit]}},
         {'$set': {'project': project, commit_sub: tscommit},
          '$addToSet': {'tags': {'$each': tags}}},
@@ -129,10 +129,10 @@ def publish(project):
     for counter, value in perf.items():
         for tag in tags:
             key = {'project': project, 'host': host, 'tag': tag, 'counter': counter}
-            mongo.db.cache.delete_many(key)
+            mongo.db.cache.remove(key)
 
         key = 'data.{}.{}'.format(counter, commit)
-        mongo.db.data.update_one(
+        mongo.db.data.update(
             {'project': project, 'host': host, 'task': task},
             {'$set': {key: value},
              '$addToSet': {'tags': {'$each': tags},
