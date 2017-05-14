@@ -75,8 +75,9 @@ def project_file(project, host, tag, counter, size='1'):
                 point = task['data'][counter].get(commit, 0)
                 lines[task['task']].append(point)
 
+        shortcommits = [c[:8] for c in commits]
         title = '{} - {} - {}'.format(host, tag, counter)
-        image = plot(title=title, xlabel='', ylabel=counter, xtics=commits, data=lines, width=w, height=h)
+        image = plot(title=title, xlabel='', ylabel=counter, xtics=shortcommits, data=lines, width=w, height=h)
         f = {'mime': 'image/png', 'data': binary.Binary(image)}
         # TODO: if image is too big it might render successfully but fail to insert and throw a 500
         mongo.db.cache.update(cache_key, {'$set': {'file': f}}, upsert=True)
