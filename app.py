@@ -4,16 +4,36 @@ from datetime import datetime, timedelta
 from flask import Flask, abort, render_template, request, send_file
 from flask_pymongo import PyMongo
 import io
+import pymongo
 
-from config import db_pass, api_key
+from config import db_config, api_key
 from plot import plot
 
 app = Flask('perf')
+app.config.update(db_config)
 mongo = PyMongo(app)
 
 @app.before_first_request
 def add_indices():
-    pass
+    db = mongo.db
+    asc = pymongo.ASCENDING
+    dsc = pymongo.DESCENDING
+    db.projects.create_index('project')
+    db.data.create_index('project')
+    db.data.create_index([
+        ('project', asc),
+        ('host', asc),
+        ('tags', asc),
+    ])
+    db.data.create_index([
+        ('project', asc),
+        ('host', asc),
+        ('task', asc),
+    ])
+    db.cache.create_index([
+        ('project', asc),
+        ('host', asc),
+    ])
 
 @app.route('/perf/')
 def perf_list():
@@ -37,7 +57,7 @@ def project_file(project, host, tag, counter, size='1'):
     else:
         # cache miss
         # grab commits for project, sort by date, and remove date
-        pcommits = mongo.db.projects.find_one({'project': project, 'tags': tag}, {'commits': 1, '_id': 0})
+        pcommits = mongo.db.projects.find_one({'project': project}, {'commits': 1, '_id': 0})
         commits = (pcommits or {}).get('commits', {}).items()
         commits = [c[0] for c in sorted(commits, key=lambda x: x[1])]
 
