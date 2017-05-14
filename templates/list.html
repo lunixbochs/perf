@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>perf</title>
+</head>
+<body>
+    <h3>perf</h3>
+	<ul>
+		{% for name in names %}
+		<li><a href="/perf/{{ name|urlencode }}/">{{ name }}</a></li>
+		{% endfor %}
+	</ul>
+</body>
+</html>

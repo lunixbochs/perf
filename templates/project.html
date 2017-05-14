@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>perf - {{ project }}</title>
+    <style type="text/css">
+        img {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <a href="/perf">&lt; perf</a>
+    {%- set next_size = size|int % 3 + 1 %}
+    <a href="{{ next_size }}">size</a>
+    {% for graph in graphs -%}
+    {% set path = '/perf/%s/graph/%s/%s/%s' %
+        (project|urlencode, graph.host|urlencode, graph.tag|urlencode, graph.counter|urlencode) %}
+    <img src="{{ path }}/{{ size }}" />
+    {%- endfor %}
+</body>
+</html>
