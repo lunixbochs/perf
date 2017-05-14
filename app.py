@@ -30,6 +30,7 @@ def add_indices():
         ('host', asc),
         ('task', asc),
     ])
+    db.cache.drop()
     db.cache.create_index([
         ('project', asc),
         ('host', asc),
