@@ -184,9 +184,14 @@ def publish(project):
         data_updates[key] = value
         counters.add(counter)
 
+    verb = '$push'
+    if json.get('overwrite'):
+        verb = '$set'
+        data_updates = {k: [v] for k, v in data_updates.items()}
+
     mongo.db.data.update(
         {'project': project, 'host': host, 'task': task},
-        {'$push': data_updates,
+        {verb: data_updates,
          '$addToSet': {'tags': {'$each': tags},
                        'counters': {'$each': list(counters)}}},
         upsert=True)
