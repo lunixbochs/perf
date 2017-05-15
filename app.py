@@ -128,18 +128,23 @@ def publish(project):
          '$addToSet': {'tags': {'$each': tags}}},
         upsert=True)
 
+    data_updates = {}
+    counters = set()
     for counter, value in perf.items():
         for tag in tags:
             key = {'project': project, 'host': host, 'tag': tag, 'counter': counter}
             mongo.db.cache.remove(key)
 
         key = 'data.{}.{}'.format(counter, commit)
-        mongo.db.data.update(
-            {'project': project, 'host': host, 'task': task},
-            {'$set': {key: value},
-             '$addToSet': {'tags': {'$each': tags},
-                           'counters': counter}},
-            upsert=True)
+        data_updates[key] = value
+        counters.add(counter)
+
+    mongo.db.data.update(
+        {'project': project, 'host': host, 'task': task},
+        {'$set': data_updates,
+         '$addToSet': {'tags': {'$each': tags},
+                       'counters': {'$each': list(counters)}}},
+        upsert=True)
     return ''
 
 if __name__ == '__main__':
