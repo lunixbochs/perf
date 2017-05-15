@@ -105,7 +105,7 @@ def project_file(project, host, tag, counter, size='1'):
             counter, yunit = match.groups()
 
         shortcommits = [c[:8] for c in commits]
-        title = '{} - {} - {}'.format(host, tag, counter)
+        title = '{} - {} - {}'.format(host, counter, tag)
         image = plot(title=title, xlabel='', ylabel=counter, xtics=shortcommits, data=lines, yunit=yunit, width=w, height=h, bare=size == '1')
         f = {'mime': 'image/png', 'data': binary.Binary(image)}
         # TODO: if image is too big it might render successfully but fail to insert and throw a 500
@@ -136,10 +136,10 @@ def view(project, size='1'):
     for d in data:
         for tag in d['tags']:
             for counter in d['counters']:
-                graphs.add((d['host'], tag, counter))
+                graphs.add((counter, tag, d['host']))
 
     # sort tuple and turn into a dict for easier template access
-    graphs = [dict(zip(('host', 'tag', 'counter'), g)) for g in sorted(graphs)]
+    graphs = [dict(zip(('counter', 'tag', 'host'), g)) for g in sorted(graphs)]
     ts = int(time.time() / 10)
     return render_template('project.html', project=project, graphs=graphs, size=size, width=w, height=h, ts=ts)
 
