@@ -41,15 +41,20 @@ def perf_list():
     names = sorted({p['project'] for p in mongo.db.projects.find({}, {'project': 1, '_id': 0})})
     return render_template('list.html', names=names)
 
+def getsize(size=1):
+    w, h = 300, 225
+    if size == '2':
+        w, h = 1280, 600
+    elif size == '3':
+        w, h = 1920, 1080
+    elif size == '4':
+        w, h = 2560, 1440
+    return w, h
+
 @app.route('/perf/<project>/graph/<host>/<tag>/<counter>')
 @app.route('/perf/<project>/graph/<host>/<tag>/<counter>/<size>')
 def project_file(project, host, tag, counter, size='1'):
-    w, h = 1280, 600
-    if size == '2':
-        w, h = 1920, 1080
-    elif size == '3':
-        w, h = 2560, 1440
-
+    w, h = getsize(size)
     cache_key = {'project': project, 'host': host, 'tag': tag, 'counter': counter, 'width': w, 'height': h}
     cached = mongo.db.cache.find_one(cache_key)
     if cached:
@@ -77,7 +82,7 @@ def project_file(project, host, tag, counter, size='1'):
 
         shortcommits = [c[:8] for c in commits]
         title = '{} - {} - {}'.format(host, tag, counter)
-        image = plot(title=title, xlabel='', ylabel=counter, xtics=shortcommits, data=lines, width=w, height=h)
+        image = plot(title=title, xlabel='', ylabel=counter, xtics=shortcommits, data=lines, width=w, height=h, bare=size == '1')
         f = {'mime': 'image/png', 'data': binary.Binary(image)}
         # TODO: if image is too big it might render successfully but fail to insert and throw a 500
         mongo.db.cache.update(cache_key, {'$set': {'file': f}}, upsert=True)
@@ -86,6 +91,7 @@ def project_file(project, host, tag, counter, size='1'):
 @app.route('/perf/<project>/')
 @app.route('/perf/<project>/<size>')
 def view(project, size='1'):
+    w, h = getsize(size)
     data = mongo.db.data.find({'project': project}, {'host': 1, 'task': 1, 'tags': 1, 'counters': 1})
     graphs = set()
     # (host: darwin-x86_64-1, tag: coreutils-ubuntu14.4.4, counter: time_ms)
@@ -96,7 +102,7 @@ def view(project, size='1'):
 
     # sort tuple and turn into a dict for easier template access
     graphs = [dict(zip(('host', 'tag', 'counter'), g)) for g in sorted(graphs)]
-    return render_template('project.html', project=project, graphs=graphs, size=size)
+    return render_template('project.html', project=project, graphs=graphs, size=size, width=w, height=h)
 
 @app.route('/perf/<project>/publish', methods=['POST'])
 def publish(project):

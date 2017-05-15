@@ -19,7 +19,7 @@ def escape(s):
             out += ' '
     return out
 
-def plot(title, xlabel, ylabel, xtics, data, width=1024, height=768):
+def plot(title, xlabel, ylabel, xtics, data, width=1024, height=768, bare=False):
     title, xlabel, ylabel = map(escape, (title, xlabel, ylabel))
     xtics = ', '.join(['"{}" {:d}'.format(escape(c), i) for i, c in enumerate(xtics)])
 
@@ -48,6 +48,21 @@ def plot(title, xlabel, ylabel, xtics, data, width=1024, height=768):
     set tics scale 0
     set xtics nomirror rotate 90 font ", 8" ({xtics})
     '''.format(**locals())
+
+    if bare:
+        plotscript += '''
+        set title '{title}' font ", 10" offset 0,-0.8
+        unset xlabel
+        unset ylabel
+        unset xtics
+        unset ytics
+        unset key
+
+        set bmargin 0.5
+        set lmargin 0.5
+        set rmargin 0.5
+        set tmargin 1
+        '''.format(**locals())
 
     plotscript += 'plot ' + ', '.join([
         '''"gpw_DATAFILE_gpw" using {:d} title '{}' with lines'''.format(i + 1, escape(title))
