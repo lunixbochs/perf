@@ -62,7 +62,7 @@ def project_file(project, host, tag, counter, size='1'):
     w, h = getsize(size)
     cache_key = {'project': project, 'host': host, 'tag': tag, 'counter': counter, 'width': w, 'height': h}
     cached = mongo.db.cache.find_one(cache_key)
-    if cached:
+    if cached and cached['file']['data']:
         # cache hit
         f = cached['file']
     else:
@@ -98,6 +98,14 @@ def project_file(project, host, tag, counter, size='1'):
         # TODO: if image is too big it might render successfully but fail to insert and throw a 500
         mongo.db.cache.update(cache_key, {'$set': {'file': f}}, upsert=True)
     return send_file(io.BytesIO(f['data']), mimetype=f['mime'])
+
+@app.route('/perf/<project>/graph/<host>/<tag>/<counter>/view')
+@app.route('/perf/<project>/graph/<host>/<tag>/<counter>/view/<size>')
+def one_view(project, host, tag, counter, size='1'):
+    w, h = getsize(size)
+    graph = {'host': host, 'tag': tag, 'counter': counter}
+    ts = int(time.time())
+    return render_template('view.html', project=project, graph=graph, size=size, width=w, height=h, ts=ts)
 
 @app.route('/perf/<project>/')
 @app.route('/perf/<project>/<size>')

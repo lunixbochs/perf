@@ -1,0 +1,11 @@
+{% extends "project.html" %}
+{% block title %} - {{ project }} - {{ graph.host }} - {{ graph.tag }} - {{ graph.counter }}{% endblock %}
+{% block cssfloat %}{% endblock %}
+{% set next_size = size|int % 4 + 1 %}
+{% if next_size < 2 %}{% set next_size = 2 %}{% endif %}
+{% block navextra %}<a href="{{ next_size }}">size</a>{% endblock %}
+{% block graphs %}
+    {% set imgpath = '/perf/%s/graph/%s/%s/%s' %
+        (project|urlencode, graph.host|urlencode, graph.tag|urlencode, graph.counter|urlencode) %}
+    <a href="/perf/{{ project|urlencode }}"><img class="graph" src="{{ imgpath }}/{{ size }}?ts={{ ts }}" /></a>
+{% endblock %}
