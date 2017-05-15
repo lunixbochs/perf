@@ -36,7 +36,7 @@ def plot(title, xlabel, ylabel, xtics, data, width=1024, height=768):
 
     # might want svg
     plotscript = '''
-    set terminal png size {width:d},{height:d}
+    set terminal pngcairo transparent enhanced size {width:d},{height:d}
 
     set title '{title}'
     set xlabel '{xlabel}'
