@@ -56,6 +56,11 @@ def getsize(size=1):
         w, h = 2560, 1440
     return w, h
 
+def calc_page_size(size=1):
+    if size == 1:
+        return PAGE_SIZE * 4
+    return max(PAGE_SIZE * (int(size) - 1), PAGE_SIZE)
+
 def avg(l):
     return sum(l) / len(l)
 
@@ -77,7 +82,7 @@ def project_file(project, host, tag, counter, size='1'):
         commits = [c[0] for c in sorted(commits, key=lambda x: x[1])]
 
         # paginate
-        page_size = max(PAGE_SIZE * (int(size) - 1), PAGE_SIZE)
+        page_size = calc_page_size(int(size))
         commits = commits[-max(page, 1) * page_size:][:page_size]
 
         # query for matching data
@@ -115,7 +120,7 @@ def one_view(project, host, tag, counter, size='1'):
 
     page = int(request.args.get('page', 1))
     data = mongo.db.projects.find_one({'project': project}, {'commits': 1})
-    page_size = max(PAGE_SIZE * (int(size) - 1), PAGE_SIZE)
+    page_size = calc_page_size(int(size))
     pages = int(math.ceil(len(data['commits']) / page_size))
 
     ts = int(time.time())
