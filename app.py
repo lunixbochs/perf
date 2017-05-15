@@ -77,7 +77,8 @@ def project_file(project, host, tag, counter, size='1'):
         commits = [c[0] for c in sorted(commits, key=lambda x: x[1])]
 
         # paginate
-        commits = commits[-max(page, 1) * PAGE_SIZE:][:PAGE_SIZE]
+        page_size = max(PAGE_SIZE * (int(size) - 1), PAGE_SIZE)
+        commits = commits[-max(page, 1) * page_size:][:page_size]
 
         # query for matching data
         tasks = list(mongo.db.data.find(
@@ -114,7 +115,8 @@ def one_view(project, host, tag, counter, size='1'):
 
     page = int(request.args.get('page', 1))
     data = mongo.db.projects.find_one({'project': project}, {'commits': 1})
-    pages = int(math.ceil(len(data['commits']) / PAGE_SIZE))
+    page_size = max(PAGE_SIZE * (int(size) - 1), PAGE_SIZE)
+    pages = int(math.ceil(len(data['commits']) / page_size))
 
     ts = int(time.time())
     return render_template('view.html', project=project, graph=graph, size=size, width=w, height=h, ts=ts, page=page, pages=pages)
