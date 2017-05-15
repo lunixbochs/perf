@@ -1,7 +1,6 @@
 import gpw
 import math
 import random
-import re
 import string
 import sys
 
@@ -19,7 +18,7 @@ def escape(s):
             out += ' '
     return out
 
-def plot(title, xlabel, ylabel, xtics, data, width=1024, height=768, bare=False):
+def plot(title, xlabel, ylabel, xtics, data, width=1024, height=768, yunit='', bare=False):
     title, xlabel, ylabel = map(escape, (title, xlabel, ylabel))
     xtics = ', '.join(['"{}" {:d}'.format(escape(c), i) for i, c in enumerate(xtics)])
 
@@ -28,11 +27,6 @@ def plot(title, xlabel, ylabel, xtics, data, width=1024, height=768, bare=False)
     colwise = [[data[k][i] for k in keys] for i in xrange(len(data[keys[0]]))]
     ymax = math.ceil(max([max(d) for d in data.values()]))
     ntics = 10
-
-    yunit = ''
-    match = re.match(r'^(.*)\((.+)\)$', ylabel)
-    if match:
-        ylabel, yunit = match.groups()
 
     # might want svg
     plotscript = '''

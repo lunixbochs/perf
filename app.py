@@ -5,6 +5,7 @@ from flask import Flask, abort, render_template, request, send_file
 from flask_pymongo import PyMongo
 import io
 import pymongo
+import re
 import time
 
 from config import db_config, api_key
@@ -84,9 +85,15 @@ def project_file(project, host, tag, counter, size='1'):
                 point = avg(task['data'][counter].get(commit, [0]))
                 lines[task['task']].append(point)
 
+        # remove (s) from counter titles and apply as y unit
+        yunit = ''
+        match = re.match(r'^(.*)\((.+)\)$', counter)
+        if match:
+            counter, yunit = match.groups()
+
         shortcommits = [c[:8] for c in commits]
         title = '{} - {} - {}'.format(host, tag, counter)
-        image = plot(title=title, xlabel='', ylabel=counter, xtics=shortcommits, data=lines, width=w, height=h, bare=size == '1')
+        image = plot(title=title, xlabel='', ylabel=counter, xtics=shortcommits, data=lines, yunit=yunit, width=w, height=h, bare=size == '1')
         f = {'mime': 'image/png', 'data': binary.Binary(image)}
         # TODO: if image is too big it might render successfully but fail to insert and throw a 500
         mongo.db.cache.update(cache_key, {'$set': {'file': f}}, upsert=True)
