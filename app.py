@@ -4,12 +4,15 @@ from datetime import datetime, timedelta
 from flask import Flask, abort, render_template, request, send_file
 from flask_pymongo import PyMongo
 import io
+import math
 import pymongo
 import re
 import time
 
 from config import db_config, api_key
 from plot import plot
+
+PAGE_SIZE = 50
 
 app = Flask('perf')
 app.config.update(db_config)
@@ -59,8 +62,9 @@ def avg(l):
 @app.route('/perf/<project>/graph/<host>/<tag>/<counter>')
 @app.route('/perf/<project>/graph/<host>/<tag>/<counter>/<size>')
 def project_file(project, host, tag, counter, size='1'):
+    page = int(request.args.get('page', 1))
     w, h = getsize(size)
-    cache_key = {'project': project, 'host': host, 'tag': tag, 'counter': counter, 'width': w, 'height': h}
+    cache_key = {'project': project, 'host': host, 'tag': tag, 'counter': counter, 'width': w, 'height': h, 'page': page}
     cached = mongo.db.cache.find_one(cache_key)
     if cached and cached['file']['data']:
         # cache hit
@@ -71,6 +75,9 @@ def project_file(project, host, tag, counter, size='1'):
         pcommits = mongo.db.projects.find_one({'project': project}, {'commits': 1, '_id': 0})
         commits = (pcommits or {}).get('commits', {}).items()
         commits = [c[0] for c in sorted(commits, key=lambda x: x[1])]
+
+        # paginate
+        commits = commits[-max(page, 1) * PAGE_SIZE:][:PAGE_SIZE]
 
         # query for matching data
         tasks = list(mongo.db.data.find(
@@ -104,8 +111,13 @@ def project_file(project, host, tag, counter, size='1'):
 def one_view(project, host, tag, counter, size='1'):
     w, h = getsize(size)
     graph = {'host': host, 'tag': tag, 'counter': counter}
+
+    page = int(request.args.get('page', 1))
+    data = mongo.db.projects.find_one({'project': project}, {'commits': 1})
+    pages = int(math.ceil(len(data['commits']) / PAGE_SIZE))
+
     ts = int(time.time())
-    return render_template('view.html', project=project, graph=graph, size=size, width=w, height=h, ts=ts)
+    return render_template('view.html', project=project, graph=graph, size=size, width=w, height=h, ts=ts, page=page, pages=pages)
 
 @app.route('/perf/<project>/')
 @app.route('/perf/<project>/<size>')
