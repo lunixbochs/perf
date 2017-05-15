@@ -5,6 +5,7 @@ from flask import Flask, abort, render_template, request, send_file
 from flask_pymongo import PyMongo
 import io
 import pymongo
+import time
 
 from config import db_config, api_key
 from plot import plot
@@ -105,7 +106,8 @@ def view(project, size='1'):
 
     # sort tuple and turn into a dict for easier template access
     graphs = [dict(zip(('host', 'tag', 'counter'), g)) for g in sorted(graphs)]
-    return render_template('project.html', project=project, graphs=graphs, size=size, width=w, height=h)
+    ts = int(time.time() / 10)
+    return render_template('project.html', project=project, graphs=graphs, size=size, width=w, height=h, ts=ts)
 
 @app.route('/perf/<project>/publish', methods=['POST'])
 def publish(project):
