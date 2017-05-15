@@ -1,6 +1,7 @@
 import gpw
 import math
 import random
+import re
 import string
 import sys
 
@@ -12,7 +13,7 @@ def escape(s):
     for c in s:
         if c in '\\\'@_':
             out += '\\'
-        if c in alnum + ' _@\\:/-."\'':
+        if c in alnum + ' _@\\:/-."\'()':
             out += c
         else:
             out += ' '
@@ -28,6 +29,11 @@ def plot(title, xlabel, ylabel, xtics, data, width=1024, height=768):
     ymax = math.ceil(max([max(d) for d in data.values()]))
     ntics = 10
 
+    yunit = ''
+    match = re.match(r'^(.*)\((.+)\)$', ylabel)
+    if match:
+        ylabel, yunit = match.groups()
+
     # might want svg
     plotscript = '''
     set terminal png size {width:d},{height:d}
@@ -36,6 +42,7 @@ def plot(title, xlabel, ylabel, xtics, data, width=1024, height=768):
     set xlabel '{xlabel}'
     set ylabel '{ylabel}'
     set key outside
+    set format y '%g{yunit}'
     set yrange [0:]
     set grid
     set tics scale 0
