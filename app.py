@@ -51,6 +51,9 @@ def getsize(size=1):
         w, h = 2560, 1440
     return w, h
 
+def avg(l):
+    return sum(l) / len(l)
+
 @app.route('/perf/<project>/graph/<host>/<tag>/<counter>')
 @app.route('/perf/<project>/graph/<host>/<tag>/<counter>/<size>')
 def project_file(project, host, tag, counter, size='1'):
@@ -77,7 +80,7 @@ def project_file(project, host, tag, counter, size='1'):
         for commit in commits:
             for task in tasks:
                 # TODO: can we graph a gap in the data somehow? maybe with dots
-                point = task['data'][counter].get(commit, 0)
+                point = avg(task['data'][counter].get(commit, [0]))
                 lines[task['task']].append(point)
 
         shortcommits = [c[:8] for c in commits]
@@ -147,7 +150,7 @@ def publish(project):
 
     mongo.db.data.update(
         {'project': project, 'host': host, 'task': task},
-        {'$set': data_updates,
+        {'$push': data_updates,
          '$addToSet': {'tags': {'$each': tags},
                        'counters': {'$each': list(counters)}}},
         upsert=True)
