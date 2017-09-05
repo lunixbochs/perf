@@ -3,20 +3,21 @@
 {% block cssfloat %}{% endblock %}
 {% set next_size = size|int % 4 + 1 %}
 {% if next_size < 2 %}{% set next_size = 2 %}{% endif %}
+{% set base = '/perf/%s/graph' % project|urlencode %}
+{% set args = 'host=%s&tag=%s&counter=%s&ts=%d' %
+    (graph.host|urlencode, graph.tag|urlencode, graph.counter|urlencode, ts) %}
 {% block nav %}
 <div class="nav">
     <a href="/perf/{{ project }}">&lt; {{ project }}</a>
-    <a href="{{ next_size }}">size</a>
+    <a href="{{ next_size }}?{{ args }}&page={{ page }}">size</a>
     {% if page < pages %}
-    <a href="{{ size }}?page={{ page + 1}}">&lt;&lt;</a>
+    <a href="{{ size }}?{{ args }}&page={{ page + 1}}">&lt;&lt;</a>
     {% else %}__{% endif %}
     <span>page {{ page }}</span>
-    {% if page > 1 %}<a href="{{ size }}?page={{ page - 1}}">&gt;&gt;</a>
+    {% if page > 1 %}<a href="{{ size }}?{{ args }}&page={{ page - 1}}">&gt;&gt;</a>
     {% else %}__{% endif %}
 </div>
 {% endblock %}
 {% block graphs %}
-    {% set imgpath = '/perf/%s/graph/%s/%s/%s' %
-        (project|urlencode, graph.host|urlencode, graph.tag|urlencode, graph.counter|urlencode) %}
-    <a href="/perf/{{ project|urlencode }}"><img class="graph" src="{{ imgpath }}/{{ size }}?page={{ page }}&ts={{ ts }}" /></a>
+    <a href="/perf/{{ project|urlencode }}"><img class="graph" src="{{ base }}/img/{{ size }}?{{ args }}&page={{ page }}" /></a>
 {% endblock %}

@@ -8,6 +8,7 @@ import math
 import pymongo
 import re
 import time
+import urllib
 
 from config import db_config, api_key
 from plot import plot
@@ -15,6 +16,7 @@ from plot import plot
 PAGE_SIZE = 50
 
 app = Flask('perf')
+app.jinja_env.filters['urlencode'] = lambda u: urllib.quote_plus(u)
 app.config.update(db_config)
 mongo = PyMongo(app)
 
@@ -64,9 +66,9 @@ def calc_page_size(size=1):
 def avg(l):
     return sum(l) / len(l)
 
-@app.route('/perf/<project>/graph/<host>/<tag>/<counter>')
-@app.route('/perf/<project>/graph/<host>/<tag>/<counter>/<size>')
-def project_file(project, host, tag, counter, size='1'):
+@app.route('/perf/<project>/graph/img/<size>')
+def project_file(project, size='1'):
+    host, tag, counter = map(request.args.get, ('host', 'tag', 'counter'))
     page = int(request.args.get('page', 1))
     w, h = getsize(size)
     cache_key = {'project': project, 'host': host, 'tag': tag, 'counter': counter, 'width': w, 'height': h, 'page': page}
@@ -105,16 +107,16 @@ def project_file(project, host, tag, counter, size='1'):
             counter, yunit = match.groups()
 
         shortcommits = [c[:8] for c in commits]
-        title = '{} - {} - {}'.format(host, counter, tag)
+        title = '{} - {} - {}'.format(host, tag, counter)
         image = plot(title=title, xlabel='', ylabel=counter, xtics=shortcommits, data=lines, yunit=yunit, width=w, height=h, bare=size == '1')
         f = {'mime': 'image/png', 'data': binary.Binary(image)}
         # TODO: if image is too big it might render successfully but fail to insert and throw a 500
         mongo.db.cache.update(cache_key, {'$set': {'file': f}}, upsert=True)
     return send_file(io.BytesIO(f['data']), mimetype=f['mime'])
 
-@app.route('/perf/<project>/graph/<host>/<tag>/<counter>/view')
-@app.route('/perf/<project>/graph/<host>/<tag>/<counter>/view/<size>')
-def one_view(project, host, tag, counter, size='1'):
+@app.route('/perf/<project>/graph/view/<size>')
+def one_view(project, size='1'):
+    host, tag, counter = map(request.args.get, ('host', 'tag', 'counter'))
     w, h = getsize(size)
     graph = {'host': host, 'tag': tag, 'counter': counter}
 
@@ -136,10 +138,10 @@ def view(project, size='1'):
     for d in data:
         for tag in d['tags']:
             for counter in d['counters']:
-                graphs.add((counter, tag, d['host']))
+                graphs.add((tag, counter, d['host']))
 
     # sort tuple and turn into a dict for easier template access
-    graphs = [dict(zip(('counter', 'tag', 'host'), g)) for g in sorted(graphs)]
+    graphs = [dict(zip(('tag', 'counter', 'host'), g)) for g in sorted(graphs)]
     ts = int(time.time() / 10)
     return render_template('project.html', project=project, graphs=graphs, size=size, width=w, height=h, ts=ts)
 

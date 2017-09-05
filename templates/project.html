@@ -27,9 +27,10 @@
 {% endblock %}
 {% block graphs %}
     {%- for graph in graphs -%}
-    {% set imgpath = '/perf/%s/graph/%s/%s/%s' %
-        (project|urlencode, graph.host|urlencode, graph.tag|urlencode, graph.counter|urlencode) %}
-    <a href="{{ imgpath }}/view/2"><img class="graph" src="{{ imgpath }}/1?ts={{ ts }}" /></a>
+    {% set base = '/perf/%s/graph' % project|urlencode %}
+    {% set args = 'host=%s&tag=%s&counter=%s&ts=%s' %
+        (graph.host|urlencode, graph.tag|urlencode, graph.counter|urlencode, ts) %}
+    <a href="{{ base }}/view/2?{{ args }}"><img class="graph" src="{{ base }}/img/1?{{ args }}" /></a>
     {%- endfor %}
 {% endblock %}
 {% endblock %}
