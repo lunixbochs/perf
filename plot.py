@@ -6,7 +6,7 @@ import sys
 
 PY3 = (sys.version_info.major == 3)
 
-alnum = string.letters + string.digits
+alnum = string.ascii_letters + string.digits
 def escape(s):
     out = ''
     for c in s:
@@ -24,7 +24,7 @@ def plot(title, xlabel, ylabel, xtics, data, width=1024, height=768, yunit='', b
 
     # this data must be well-formed
     keys = sorted(data.keys())
-    colwise = [[data[k][i] for k in keys] for i in xrange(len(data[keys[0]]))]
+    colwise = [[data[k][i] for k in keys] for i in range(len(data[keys[0]]))]
     ymax = math.ceil(max([max(d) for d in data.values()]))
     ntics = 10
 
@@ -69,6 +69,7 @@ def plot(title, xlabel, ylabel, xtics, data, width=1024, height=768, yunit='', b
     ]) + '\n'
 
     if PY3:
+        plotdata = plotdata.encode()
         plotscript = plotscript.encode()
     plotout = gpw.plot(plotdata, plotscript=plotscript, usefifo=False)
     return plotout

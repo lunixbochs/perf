@@ -3,12 +3,12 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from flask import Flask, abort, render_template, request, send_file
 from flask_pymongo import PyMongo
+from urllib.parse import quote_plus
 import io
 import math
 import pymongo
 import re
 import time
-import urllib
 
 from config import db_config, api_key
 from plot import plot
@@ -16,7 +16,7 @@ from plot import plot
 PAGE_SIZE = 50
 
 app = Flask('perf')
-app.jinja_env.filters['urlencode'] = lambda u: urllib.quote_plus(u)
+app.jinja_env.filters['urlencode'] = lambda u: quote_plus(u)
 app.config.update(db_config)
 mongo = PyMongo(app)
 
@@ -111,7 +111,7 @@ def project_file(project, size='1'):
         image = plot(title=title, xlabel='', ylabel=counter, xtics=shortcommits, data=lines, yunit=yunit, width=w, height=h, bare=size == '1')
         f = {'mime': 'image/png', 'data': binary.Binary(image)}
         # TODO: if image is too big it might render successfully but fail to insert and throw a 500
-        mongo.db.cache.update(cache_key, {'$set': {'file': f}}, upsert=True)
+        mongo.db.cache.update_one(cache_key, {'$set': {'file': f}}, upsert=True)
     return send_file(io.BytesIO(f['data']), mimetype=f['mime'])
 
 @app.route('/perf/<project>/graph/view/<size>')
@@ -169,7 +169,7 @@ def publish(project):
         tscommit = datetime.utcfromtimestamp(tscommit / 1000.0)
 
     commit_sub = 'commits.{}'.format(commit)
-    mongo.db.projects.update(
+    mongo.db.projects.update_one(
         {'project': project, 'commits': {'$nin': [commit]}},
         {'$set': {'project': project, commit_sub: tscommit},
          '$addToSet': {'tags': {'$each': tags}}},
@@ -191,7 +191,7 @@ def publish(project):
         verb = '$set'
         data_updates = {k: [v] for k, v in data_updates.items()}
 
-    mongo.db.data.update(
+    mongo.db.data.update_one(
         {'project': project, 'host': host, 'task': task},
         {verb: data_updates,
          '$addToSet': {'tags': {'$each': tags},
